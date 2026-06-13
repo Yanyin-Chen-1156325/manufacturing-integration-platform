@@ -365,3 +365,4 @@ FodyWeavers.xsd
 
 
 **/appsettings.Development.json
+/ManufacturingIntegration.Functions/Properties/launchSettings.json
