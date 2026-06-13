@@ -7,7 +7,8 @@ namespace Erp.Api.Dto
         [Required]
         [MaxLength(50)]
         public string ProductCode { get; set; } = string.Empty;
-        [Range(1, int.MaxValue)]
+        
+        [Range(1, 100000)]
         public int Quantity { get; set; }
     }
 }

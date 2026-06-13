@@ -22,6 +22,8 @@ namespace ManufacturingIntegration.Functions
         [Function(nameof(ProcessProductionOrderFunction))]
         public async Task Run([ServiceBusTrigger("production-order-released", Connection = "ServiceBusConnection")] ServiceBusReceivedMessage message)
         {
+            _logger.LogInformation("Delivery Count: {count}",message.DeliveryCount);
+
             _logger.LogInformation("Message ID: {id}", message.MessageId);
             _logger.LogInformation("Message Body: {body}", message.Body);
             _logger.LogInformation("Message Content-Type: {contentType}", message.ContentType);
