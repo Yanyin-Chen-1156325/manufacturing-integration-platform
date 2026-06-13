@@ -119,14 +119,6 @@ Main Queue
 * HttpClientFactory
 * Structured Logging
 
-### Reliability
-
-* Automatic Retry Handling
-* Dead Letter Queue Processing
-* Dead Letter Queue Reprocessing
-* Validation Failure Testing
-* End-to-End Integration Verification
-
 ---
 
 ## Technology Stack
@@ -166,102 +158,6 @@ ManufacturingIntegrationPlatform
 ├── Mes.Api
 ├── Shared.Contracts
 └── ManufacturingIntegration.Functions
-```
-
----
-
-## ERP API
-
-### Order Entity
-
-```csharp
-public class Order
-{
-    public int Id { get; set; }
-
-    public string OrderNumber { get; set; } = string.Empty;
-
-    public string ProductCode { get; set; } = string.Empty;
-
-    public int Quantity { get; set; }
-
-    public string Status { get; set; } = "Draft";
-
-    public DateTime CreatedAt { get; set; }
-
-    public DateTime? ReleasedAt { get; set; }
-}
-```
-
-### Endpoints
-
-```http
-POST /api/orders
-GET /api/orders
-GET /api/orders/{id}
-PUT /api/orders/{id}/release
-```
-
-### Order Lifecycle
-
-```text
-Draft
-  ↓
-Released
-```
-
----
-
-## MES API
-
-### Job Entity
-
-```csharp
-public class Job
-{
-    public int Id { get; set; }
-
-    public string JobNumber { get; set; } = string.Empty;
-
-    public string ProductCode { get; set; } = string.Empty;
-
-    public int PlannedQuantity { get; set; }
-
-    public DateTime CreatedAt { get; set; }
-}
-```
-
-### Endpoints
-
-```http
-POST /api/jobs
-GET /api/jobs
-GET /api/jobs/{id}
-```
-
-### Validation Rules
-
-```csharp
-[Required]
-[MaxLength(50)]
-public string ProductCode { get; set; }
-
-[Range(1, 100000)]
-public int PlannedQuantity { get; set; }
-```
-
----
-
-## Event Contract
-
-### ProductionOrderReleasedEvent
-
-```csharp
-public record ProductionOrderReleasedEvent(
-    string OrderNumber,
-    string ProductCode,
-    int Quantity,
-    DateTime ReleasedAt);
 ```
 
 ---
@@ -324,62 +220,6 @@ Verified successfully.
 
 ---
 
-## Dead Letter Queue
-
-Queue Configuration:
-
-```text
-Max Delivery Count = 5
-```
-
-After retry limit is reached:
-
-```text
-Azure Function
-
-↓
-
-Retry Limit Reached
-
-↓
-
-Dead Letter Queue
-```
-
-Verified successfully.
-
----
-
-## Dead Letter Reprocessing
-
-A dedicated HTTP-triggered Azure Function allows operators to reprocess failed messages.
-
-### Endpoint
-
-```http
-POST /api/deadletters/reprocess
-```
-
-### Flow
-
-```text
-Dead Letter Queue
-
-↓
-
-Read Message
-
-↓
-
-Send Back To Main Queue
-
-↓
-
-Complete DLQ Message
-```
-
----
-
 ## Tested Scenarios
 
 ### Successful Integration
@@ -430,24 +270,6 @@ Retry
 Dead Letter Queue
 ```
 
-### Dead Letter Reprocessing
-
-```text
-Dead Letter Queue
-
-↓
-
-Reprocess Endpoint
-
-↓
-
-Main Queue
-
-↓
-
-MES API
-```
-
 ---
 
 ## Current Status
@@ -475,23 +297,3 @@ MES API
 * Application Insights
 * Azure Deployment
 * Azure DevOps CI/CD Pipeline
-
----
-
-## Future Enhancements
-
-* Azure API Management
-* Logic Apps Integration
-* Distributed Tracing
-* CI/CD Deployment Automation
-* Advanced Error Classification (400 vs 500)
-* Circuit Breaker Pattern
-* Polly Resilience Policies
-
----
-
-## Resume Summary
-
-Built a cloud-native Manufacturing Integration Platform using ASP.NET Core, Azure Service Bus, Azure Functions, PostgreSQL, and Entity Framework Core.
-
-Implemented asynchronous ERP-to-MES integration, automatic job creation, retry handling, dead-letter queue processing, and message reprocessing patterns commonly used in enterprise integration solutions.
