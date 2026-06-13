@@ -272,28 +272,4 @@ Dead Letter Queue
 
 ---
 
-## Current Status
 
-### Completed
-
-* ERP API
-* MES API
-* PostgreSQL Integration
-* Entity Framework Core 8
-* DTO Validation
-* Event Contracts
-* Azure Service Bus Integration
-* Azure Functions
-* Dependency Injection
-* HttpClientFactory
-* Structured Logging
-* Retry Handling
-* Dead Letter Queue Processing
-* Dead Letter Queue Reprocessing
-* End-to-End Integration Testing
-
-### In Progress
-
-* Application Insights
-* Azure Deployment
-* Azure DevOps CI/CD Pipeline
