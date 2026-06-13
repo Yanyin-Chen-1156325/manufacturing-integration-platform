@@ -4,7 +4,7 @@ using Erp.Api.Dto;
 using Erp.Api.Model;
 using Erp.Api.Data;
 using Shared.Contracts.Event;
-using Shared.Contracts.Event;
+using Erp.Api.Services;
 
 namespace Erp.Api.Controllers
 {
@@ -14,11 +14,13 @@ namespace Erp.Api.Controllers
     {
         private readonly ErpDbContext _dbContext;
         private readonly ILogger<OrdersController> _logger;
+        private readonly IServiceBusPublisher _publisher;
 
-        public OrdersController(ErpDbContext dbContext, ILogger<OrdersController> logger)
+        public OrdersController(ErpDbContext dbContext, ILogger<OrdersController> logger, IServiceBusPublisher publisher)
         {
             _dbContext = dbContext;
             _logger = logger;
+            _publisher = publisher;
         }
 
         /// <summary>
@@ -111,6 +113,8 @@ namespace Erp.Api.Controllers
                 order.ProductCode,
                 order.Quantity,
                 order.ReleasedAt!.Value);
+
+            await _publisher.PublishAsync(evt);
 
             _logger.LogInformation(
                 "Production Order Released {@Event}",

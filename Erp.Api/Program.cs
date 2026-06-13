@@ -1,5 +1,6 @@
 using Erp.Api.Data;
 using Microsoft.EntityFrameworkCore;
+using Erp.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,9 @@ builder.Services.AddDbContext<ErpDbContext>(options =>
         builder.Configuration.GetConnectionString("Postgres")
         );
 });
+
+// DI
+builder.Services.AddSingleton<IServiceBusPublisher, ServiceBusPublisher>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
