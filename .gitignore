@@ -366,3 +366,9 @@ FodyWeavers.xsd
 
 **/appsettings.Development.json
 /ManufacturingIntegration.Functions/Properties/launchSettings.json
+/Erp.Api/Properties/ServiceDependencies/erp-api-ann-dev - Web Deploy/profile.arm.json
+/Erp.Api/Properties/ServiceDependencies/erp-api-ann-dev - Web Deploy1/profile.arm.json
+/Erp.Api/Properties/ServiceDependencies/erp-api-ann-dev - Zip Deploy/profile.arm.json
+/Mes.Api/Properties/ServiceDependencies/mes-api-ann-dev - Web Deploy/profile.arm.json
+/Mes.Api/Properties/ServiceDependencies/mes-api-ann-dev - Web Deploy1/profile.arm.json
+/Mes.Api/Properties/ServiceDependencies/mes-api-ann-dev - Zip Deploy/profile.arm.json
