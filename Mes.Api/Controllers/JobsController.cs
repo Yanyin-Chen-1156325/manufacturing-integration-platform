@@ -29,7 +29,7 @@ namespace Mes.Api.Controllers
         {
             var job = new Job
             {
-                JobNumber = $"JOB-{DateTime.UtcNow:yyyyMMddHHmmss}",
+                JobNumber = request.JobNumber,
                 ProductCode = request.ProductCode,
                 PlannedQuantity = request.PlannedQuantity,
                 CreatedAt = DateTime.UtcNow

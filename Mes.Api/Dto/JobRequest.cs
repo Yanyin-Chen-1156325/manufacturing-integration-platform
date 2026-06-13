@@ -6,6 +6,10 @@ namespace Mes.Api.Dto
     {
         [Required]
         [MaxLength(50)]
+        public string JobNumber { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(50)]
         public string ProductCode { get; set; } = string.Empty;
 
         [Range(1, 100000)]
