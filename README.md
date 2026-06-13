@@ -2,45 +2,11 @@
 
 ## Overview
 
-Manufacturing Integration Platform is a project that demonstrates modern Azure integration architecture for manufacturing systems.
+Manufacturing Integration Platform is a cloud-native, event-driven integration solution built on Microsoft Azure technologies.
 
-The project simulates the modernization of a traditional ERP-to-MES integration process by introducing event-driven architecture, messaging, and cloud-native integration services.
+The project demonstrates how a traditional manufacturing integration process can be modernized using asynchronous messaging, Azure Functions, and enterprise integration patterns.
 
-### Legacy Architecture
-
-ERP
-
-↓
-
-Batch Import
-
-↓
-
-MES
-
-### Target Architecture
-
-ERP API
-
-↓
-
-Azure API Management
-
-↓
-
-Azure Service Bus Topic
-
-↓
-
-Azure Function
-
-↓
-
-MES API
-
-↓
-
-PostgreSQL Database
+The solution simulates the integration between an ERP system and a Manufacturing Execution System (MES), enabling automatic production job creation through Azure Service Bus messaging.
 
 ---
 
@@ -50,32 +16,138 @@ A manufacturing company releases production orders from an ERP system.
 
 When an order is released:
 
-1. The ERP system publishes a Production Order Released event.
-2. The integration layer processes the event.
-3. The MES system creates a production job automatically.
-4. Production execution can begin without manual intervention.
+1. ERP publishes a ProductionOrderReleased event.
+2. Azure Service Bus receives the event.
+3. Azure Function processes the message.
+4. MES API automatically creates a production job.
+5. Job data is stored in PostgreSQL.
+
+This eliminates manual data transfer and enables reliable system-to-system integration.
 
 ---
 
-## Technologies
+## Legacy Architecture
+
+```text
+ERP
+
+↓
+
+Batch Import
+
+↓
+
+MES
+```
+
+---
+
+## Modernized Architecture
+
+```text
+ERP API
+   │
+   ▼
+Azure Service Bus Queue
+   │
+   ▼
+Azure Function
+(ProcessProductionOrderFunction)
+   │
+   ▼
+MES API
+   │
+   ▼
+PostgreSQL
+```
+
+---
+
+## Failure Handling Architecture
+
+```text
+ERP API
+   │
+   ▼
+Azure Service Bus Queue
+   │
+   ▼
+ProcessProductionOrderFunction
+   │
+   ▼
+MES API
+
+Failure
+   │
+   ▼
+Retry
+   │
+   ▼
+Dead Letter Queue
+   │
+   ▼
+ReprocessDeadLetterFunction
+   │
+   ▼
+Main Queue
+```
+
+---
+
+## Features
+
+### ERP API
+
+* Create Production Orders
+* Retrieve Production Orders
+* Release Production Orders
+* Publish Integration Events to Azure Service Bus
+
+### MES API
+
+* Create Production Jobs
+* Retrieve Production Jobs
+* Request Validation
+* PostgreSQL Persistence
+
+### Azure Integration
+
+* Event-Driven Architecture
+* Azure Service Bus Queue Messaging
+* Azure Functions (.NET 8 Isolated Worker)
+* Dependency Injection
+* HttpClientFactory
+* Structured Logging
+
+### Reliability
+
+* Automatic Retry Handling
+* Dead Letter Queue Processing
+* Dead Letter Queue Reprocessing
+* Validation Failure Testing
+* End-to-End Integration Verification
+
+---
+
+## Technology Stack
 
 ### Backend
 
 * ASP.NET Core 8 Web API
-* Entity Framework Core 8
 * C#
+* .NET 8
+* Entity Framework Core 8
 
 ### Database
 
 * PostgreSQL
 * Supabase
 
-### Azure Integration Services
+### Azure Services
 
-* Azure API Management (Planned)
-* Azure Service Bus Topic (Planned)
-* Azure Functions (Planned)
-* Application Insights (Planned)
+* Azure Service Bus
+* Azure Functions
+* Application Insights (In Progress)
 
 ### DevOps
 
@@ -92,19 +164,34 @@ ManufacturingIntegrationPlatform
 
 ├── Erp.Api
 ├── Mes.Api
-└── Shared.Contracts
+├── Shared.Contracts
+└── ManufacturingIntegration.Functions
 ```
 
 ---
 
 ## ERP API
 
-### Features
+### Order Entity
 
-* Create Production Order
-* Get All Orders
-* Get Order By Id
-* Release Production Order
+```csharp
+public class Order
+{
+    public int Id { get; set; }
+
+    public string OrderNumber { get; set; } = string.Empty;
+
+    public string ProductCode { get; set; } = string.Empty;
+
+    public int Quantity { get; set; }
+
+    public string Status { get; set; } = "Draft";
+
+    public DateTime CreatedAt { get; set; }
+
+    public DateTime? ReleasedAt { get; set; }
+}
+```
 
 ### Endpoints
 
@@ -127,11 +214,22 @@ Released
 
 ## MES API
 
-### Features
+### Job Entity
 
-* Create Job
-* Get All Jobs
-* Get Job By Id
+```csharp
+public class Job
+{
+    public int Id { get; set; }
+
+    public string JobNumber { get; set; } = string.Empty;
+
+    public string ProductCode { get; set; } = string.Empty;
+
+    public int PlannedQuantity { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+}
+```
 
 ### Endpoints
 
@@ -141,9 +239,20 @@ GET /api/jobs
 GET /api/jobs/{id}
 ```
 
+### Validation Rules
+
+```csharp
+[Required]
+[MaxLength(50)]
+public string ProductCode { get; set; }
+
+[Range(1, 100000)]
+public int PlannedQuantity { get; set; }
+```
+
 ---
 
-## Shared Contracts
+## Event Contract
 
 ### ProductionOrderReleasedEvent
 
@@ -155,22 +264,188 @@ public record ProductionOrderReleasedEvent(
     DateTime ReleasedAt);
 ```
 
-This event represents a released production order and will be used for Azure Service Bus integration.
+---
+
+## Integration Flow
+
+### Successful Processing
+
+```text
+Create Order
+
+↓
+
+Release Order
+
+↓
+
+Azure Service Bus Queue
+
+↓
+
+Azure Function
+
+↓
+
+MES API
+
+↓
+
+PostgreSQL Jobs Table
+```
 
 ---
 
-## Database Schema
+## Retry Handling
 
-### ERP
+When MES API is unavailable:
 
 ```text
-manufacturing.orders
+Azure Function
+
+↓
+
+Processing Failure
+
+↓
+
+Azure Service Bus Retry
+
+↓
+
+DeliveryCount Increases
+
+↓
+
+Retry Processing
 ```
 
-### MES
+Verified successfully.
+
+---
+
+## Dead Letter Queue
+
+Queue Configuration:
 
 ```text
-manufacturing.jobs
+Max Delivery Count = 5
+```
+
+After retry limit is reached:
+
+```text
+Azure Function
+
+↓
+
+Retry Limit Reached
+
+↓
+
+Dead Letter Queue
+```
+
+Verified successfully.
+
+---
+
+## Dead Letter Reprocessing
+
+A dedicated HTTP-triggered Azure Function allows operators to reprocess failed messages.
+
+### Endpoint
+
+```http
+POST /api/deadletters/reprocess
+```
+
+### Flow
+
+```text
+Dead Letter Queue
+
+↓
+
+Read Message
+
+↓
+
+Send Back To Main Queue
+
+↓
+
+Complete DLQ Message
+```
+
+---
+
+## Tested Scenarios
+
+### Successful Integration
+
+```text
+ERP API
+ ↓
+Azure Service Bus
+ ↓
+Azure Function
+ ↓
+MES API
+ ↓
+PostgreSQL
+```
+
+### MES API Offline
+
+```text
+MES API Offline
+ ↓
+Function Failure
+ ↓
+Retry
+ ↓
+Dead Letter Queue
+```
+
+### Validation Failure
+
+```text
+Quantity = 111111
+
+↓
+
+MES API Validation Error
+
+↓
+
+400 Bad Request
+
+↓
+
+Retry
+
+↓
+
+Dead Letter Queue
+```
+
+### Dead Letter Reprocessing
+
+```text
+Dead Letter Queue
+
+↓
+
+Reprocess Endpoint
+
+↓
+
+Main Queue
+
+↓
+
+MES API
 ```
 
 ---
@@ -181,42 +456,42 @@ manufacturing.jobs
 
 * ERP API
 * MES API
-* Entity Framework Core
 * PostgreSQL Integration
+* Entity Framework Core 8
 * DTO Validation
-* Release Workflow
-* Event Contract
+* Event Contracts
+* Azure Service Bus Integration
+* Azure Functions
+* Dependency Injection
+* HttpClientFactory
 * Structured Logging
-* GitHub Repository
+* Retry Handling
+* Dead Letter Queue Processing
+* Dead Letter Queue Reprocessing
+* End-to-End Integration Testing
 
 ### In Progress
 
-* Azure Service Bus Topic Integration
-
-### Planned
-
-* Azure Function Consumer
-* MES Integration Automation
-* Retry Handling
-* Dead Letter Queue
 * Application Insights
-* Correlation IDs
-* Azure DevOps CI/CD
+* Azure Deployment
+* Azure DevOps CI/CD Pipeline
 
 ---
 
-## Future Architecture
+## Future Enhancements
 
-```text
-ERP API
-    ↓
-Azure API Management
-    ↓
-Azure Service Bus Topic
-    ↓
-Azure Function
-    ↓
-MES API
-    ↓
-PostgreSQL
-```
+* Azure API Management
+* Logic Apps Integration
+* Distributed Tracing
+* CI/CD Deployment Automation
+* Advanced Error Classification (400 vs 500)
+* Circuit Breaker Pattern
+* Polly Resilience Policies
+
+---
+
+## Resume Summary
+
+Built a cloud-native Manufacturing Integration Platform using ASP.NET Core, Azure Service Bus, Azure Functions, PostgreSQL, and Entity Framework Core.
+
+Implemented asynchronous ERP-to-MES integration, automatic job creation, retry handling, dead-letter queue processing, and message reprocessing patterns commonly used in enterprise integration solutions.
