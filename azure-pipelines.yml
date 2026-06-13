@@ -10,6 +10,7 @@ variables:
 steps:
 
 - task: UseDotNet@2
+  displayName: Install .NET SDK
   inputs:
     packageType: sdk
     version: '8.0.x'
@@ -17,5 +18,17 @@ steps:
 - script: dotnet restore
   displayName: Restore
 
-- script: dotnet build --configuration $(buildConfiguration)
+- script: dotnet build --configuration $(buildConfiguration) --no-restore
   displayName: Build
+
+- script: |
+    dotnet publish Mes.Api/Mes.Api.csproj \
+      --configuration $(buildConfiguration) \
+      --output $(Build.ArtifactStagingDirectory)/mes-api
+  displayName: Publish MES API
+
+- task: PublishBuildArtifacts@1
+  displayName: Publish Artifact
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)/mes-api'
+    ArtifactName: 'mes-api'
